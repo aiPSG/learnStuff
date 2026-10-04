@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  const S = window.Sound, FX = window.FX, M = window.MathTerm, R = window.Rand;
+  const S = window.Sound, FX = window.FX, M = window.MathTerm, R = window.Rand, AV = window.Avatar, TU = window.Tutor;
   const TOPICS = window.Topics.list;
   const esc = window.Visuals.esc;
   const main = document.getElementById('main');
@@ -27,8 +27,11 @@
 
   // ---------- Speicher ----------
   function load() {
-    const def = { name: '', xp: 0, best: {}, self: {}, plays: {}, test: null };
-    try { return Object.assign(def, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { return def; }
+    const def = { name: '', xp: 0, best: {}, self: {}, plays: {}, test: null, credits: 0, avatar: AV.defaults() };
+    let st;
+    try { st = Object.assign(def, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { st = def; }
+    st.avatar = Object.assign(AV.defaults(), st.avatar || {});
+    return st;
   }
   const store = load();
   function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) { /* privater Modus */ } }
@@ -47,6 +50,9 @@
     bar: document.getElementById('hdr-xpbar'),
     xp: document.getElementById('hdr-xp'),
     mute: document.getElementById('btn-mute'),
+    credits: document.getElementById('hdr-credits'),
+    avatar: document.getElementById('hdr-avatar'),
+    settings: document.getElementById('btn-settings'),
   };
   function updateHeader(pop) {
     const l = level();
@@ -54,7 +60,19 @@
     hdr.level.title = levelName(l);
     hdr.bar.style.width = levelProgress() * 100 + '%';
     hdr.xp.textContent = store.xp + ' XP';
+    hdr.credits.textContent = store.credits;
+    hdr.avatar.innerHTML = AV.render(store.avatar, { cls: 'mini' });
     if (pop) FX.pop(hdr.xp.parentElement);
+  }
+
+  function addCredits(n, el) {
+    if (n <= 0) return;
+    store.credits += n;
+    save();
+    updateHeader();
+    S.play('coin');
+    FX.pop(hdr.credits.parentElement);
+    if (el) FX.floatText(el, '+' + n + ' 🪙', 'coins');
   }
   function updateMute() {
     hdr.mute.textContent = S.isMuted() ? '🔇' : '🔊';
@@ -110,6 +128,8 @@
       else renderTopic(+parts[1]);
     } else if (parts[0] === 'test') {
       startQuiz('test');
+    } else if (parts[0] === 'shop') {
+      renderShop();
     } else {
       renderHome();
     }
@@ -131,11 +151,12 @@
           Wähle ein Thema, lies die Erklärung und sammle beim Üben Sterne ⭐ und XP!</p>
         </div>
         <div class="level-card">
-          <div class="lvl-emoji">${['🐣', '🔍', '🔓', '🧠', '🃏', '🧙', '👑'][Math.min(l, 6)]}</div>
+          <a class="lvl-avatar" href="#/shop" aria-label="Avatar anziehen">${AV.render(store.avatar)}</a>
           <div class="lvl-name">${levelName(l)}</div>
           <div class="lvl-sub">Level ${l + 1} · ${store.xp} XP</div>
           <div class="xpbar"><div style="width:${levelProgress() * 100}%"></div></div>
-          <div class="lvl-sub">⭐ ${totalStars} / ${TOPICS.length * 3} Sterne</div>
+          <div class="lvl-sub">⭐ ${totalStars} / ${TOPICS.length * 3} Sterne · 🪙 ${store.credits} Credits</div>
+          <a class="btn small shop-btn" href="#/shop">🛍️ Avatar-Shop</a>
         </div>
       </section>
       <div class="home-actions">
@@ -170,7 +191,7 @@
     });
     document.getElementById('reset').addEventListener('click', () => {
       if (confirm('Wirklich alle Sterne, XP und Einschätzungen löschen?')) {
-        Object.assign(store, { xp: 0, best: {}, self: {}, plays: {}, test: null });
+        Object.assign(store, { xp: 0, best: {}, self: {}, plays: {}, test: null, credits: 0, avatar: AV.defaults() });
         save(); updateHeader(); renderHome(); S.play('swoosh');
       }
     });
@@ -277,11 +298,30 @@
   }
 
   function startQuiz(mode, topicId) {
-    quiz = { mode, topicId, items: buildItems(mode, topicId), idx: 0, points: 0, xp: 0, streak: 0, bestStreak: 0, results: [] };
+    quiz = { mode, topicId, items: buildItems(mode, topicId), idx: 0, points: 0, xp: 0, streak: 0, bestStreak: 0, results: [], chat: [] };
     const t = topicId ? TOPICS[topicId - 1] : null;
     document.title = (t ? t.title : 'Großer Test') + ' – Üben – TermQuest';
     renderQuestion();
   }
+
+  function mountTutor(t, q) {
+    TU.mount(main.querySelector('.tutor-slot'), {
+      topic: t,
+      history: quiz.chat,
+      hint: HINTS[t.id],
+      getContext: () => {
+        const plain = (sel) => { const el = main.querySelector(sel); return el ? el.innerText.replace(/\s+/g, ' ').trim() : ''; };
+        return {
+          topicTitle: t.title,
+          question: [plain('.q-prompt'), plain('.q-visual')].filter(Boolean).join(' – ') +
+            (q.type === 'mc' ? ' Antwortmöglichkeiten: ' + q.options.map((o) => o.replace(/<[^>]+>/g, '')).join(' | ') : ''),
+          answered: !!(quiz && quiz.answered),
+          solution: solutionHtml(q).replace(/<[^>]+>/g, ''),
+        };
+      },
+    });
+  }
+
 
   function renderQuestion() {
     const qz = quiz;
@@ -312,7 +352,10 @@
           <button class="btn big" id="q-check" data-silent>Prüfen ✔</button>
           <button class="btn big" id="q-next" hidden>Weiter →</button>
         </div>
+        <div class="tutor-slot"></div>
       </div>`;
+
+    mountTutor(t, q);
 
     const ans = main.querySelector('.q-answer');
     const check = document.getElementById('q-check');
@@ -513,6 +556,8 @@
 
   document.addEventListener('keydown', (e) => {
     if (!quiz || !main.querySelector('.q-card')) return;
+    // Tippen im Chat oder in Dialogen darf keine Quiz-Tastenkürzel auslösen
+    if (e.target.closest && e.target.closest('.tutor, dialog')) return;
     if (e.key === 'Enter' && quiz.answered && document.activeElement && document.activeElement.id !== 'q-next') { e.preventDefault(); nextQuestion(); }
     const q = quiz.items[quiz.idx].q;
     if (q.type === 'mc' && !quiz.answered) {
@@ -538,6 +583,8 @@
       store.test = { score: qz.points, max, date: new Date().toISOString() };
     }
     save();
+    // Credits: 5 pro Punkt + Sterne-Bonus
+    const earned = Math.round(qz.points * 5) + [0, 0, 5, 15][stars];
 
     const headline = stars === 3 ? 'Perfekt! 🏆' : stars === 2 ? 'Stark gemacht! 💪' : stars === 1 ? 'Gut – weiter so! 🌱' : 'Dranbleiben! 🧗';
     const name = store.name ? ', ' + esc(store.name) : '';
@@ -565,6 +612,7 @@
         <p class="score">Du hast <b>${M.fmtNum(qz.points)} von ${max}</b> Punkten.</p>
         <div class="res-stats">
           <div><b>+${qz.xp}</b><span>XP</span></div>
+          <div class="coin-stat"><b>+${earned} 🪙</b><span>Credits</span></div>
           <div><b>🔥 ${qz.bestStreak}</b><span>beste Serie</span></div>
           <div><b>${Math.round(frac * 100)}%</b><span>richtig</span></div>
         </div>
@@ -574,9 +622,11 @@
           <a class="btn big" href="${isTest ? '#/test' : `#/t/${qz.topicId}/quiz`}" id="again">🔁 Nochmal</a>
           ${t ? `<a class="btn ghost" href="#/t/${t.id}">📖 Zur Erklärung</a>` : ''}
           ${t && t.id < TOPICS.length ? `<a class="btn ghost" href="#/t/${t.id + 1}">Nächstes Thema →</a>` : ''}
+          <a class="btn ghost" href="#/shop">🛍️ Avatar-Shop (${store.credits + earned} 🪙)</a>
           <a class="btn ghost" href="#/">🏠 Übersicht</a>
         </div>
       </div>`;
+    setTimeout(() => addCredits(earned, main.querySelector('.coin-stat')), 900);
     // „Nochmal“ auf derselben URL: hashchange feuert nicht → selbst neu starten
     document.getElementById('again').addEventListener('click', (e) => {
       const target = isTest ? '#/test' : `#/t/${qz.topicId}/quiz`;
@@ -597,6 +647,141 @@
     }, 400 + stars * 450 + 100);
     quiz = null;
   }
+
+
+  // ---------- Avatar-Shop ----------
+  function renderShop() {
+    document.title = 'Avatar-Shop – TermQuest';
+    const av = store.avatar;
+    let slot = 'shirt';
+    let preview = null; // Artikel, der gerade anprobiert wird
+
+    main.innerHTML = `
+      <a href="#/" class="back">← Übersicht</a>
+      <h1 class="shop-title">🛍️ Avatar-Shop</h1>
+      <div class="shop">
+        <aside class="card shop-side">
+          <div class="shop-avatar"></div>
+          <div class="wallet" aria-live="polite">🪙 <b id="wallet">${store.credits}</b> Credits</div>
+          <p class="wallet-hint">Credits bekommst du für jedes abgeschlossene Quiz – je mehr richtig, desto mehr!</p>
+          <h2>Aussehen <small>(kostenlos)</small></h2>
+          <div class="look-row" data-silent aria-label="Hautfarbe">${AV.SKINS.map((c, i) => `<button class="swatch skin" data-skin="${i}" style="background:${c}" aria-label="Hautfarbe ${i + 1}"></button>`).join('')}</div>
+          <div class="look-row" data-silent aria-label="Frisur">${Object.entries(AV.HAIR_STYLES).map(([k, n]) => `<button class="look-btn" data-hair="${k}">${n}</button>`).join('')}</div>
+          <div class="look-row" data-silent aria-label="Haarfarbe">${Object.entries(AV.HAIR_COLORS).map(([k, c]) => `<button class="swatch" data-hc="${k}" style="background:${c}" aria-label="Haarfarbe ${k}"></button>`).join('')}</div>
+        </aside>
+        <section class="shop-main">
+          <div class="slot-tabs" role="tablist" data-silent>${AV.SLOTS.map((s) => `<button class="slot-tab" role="tab" data-slot="${s.id}">${s.emoji} ${s.name}</button>`).join('')}</div>
+          <div class="item-grid"></div>
+        </section>
+      </div>`;
+
+    const big = main.querySelector('.shop-avatar');
+    const grid = main.querySelector('.item-grid');
+    const drawBig = () => {
+      big.innerHTML = AV.render(av, { preview: preview ? { [preview.slot]: preview.id } : null }) +
+        (preview && !av.owned.includes(preview.id) ? '<div class="try-tag">Anprobiert 👀</div>' : '');
+    };
+    const markLook = () => {
+      main.querySelectorAll('[data-skin]').forEach((b) => b.classList.toggle('on', +b.dataset.skin === av.skin));
+      main.querySelectorAll('[data-hair]').forEach((b) => b.classList.toggle('on', b.dataset.hair === av.hair));
+      main.querySelectorAll('[data-hc]').forEach((b) => b.classList.toggle('on', b.dataset.hc === av.hairColor && !av.equipped.dye));
+    };
+    const changed = () => { save(); updateHeader(); drawBig(); markLook(); };
+
+    function drawGrid() {
+      main.querySelectorAll('.slot-tab').forEach((b) => { b.classList.toggle('on', b.dataset.slot === slot); b.setAttribute('aria-selected', b.dataset.slot === slot); });
+      grid.innerHTML = AV.ITEMS.filter((it) => it.slot === slot).map((it) => {
+        const owned = av.owned.includes(it.id) || it.price === 0;
+        const worn = av.equipped[it.slot] === it.id;
+        const canBuy = store.credits >= it.price;
+        const action = worn ? (it.slot === 'shirt' || it.slot === 'bg' ? '✔ Angezogen' : 'Ausziehen')
+          : owned ? 'Anziehen' : `Kaufen · ${it.price} 🪙`;
+        return `<div class="item${worn ? ' worn' : ''}${owned ? ' owned' : ''}${preview && preview.id === it.id ? ' trying' : ''}" data-id="${it.id}">
+          <button class="item-thumb" data-act="try" data-silent aria-label="${it.name} anprobieren">${AV.render(av, { preview: { [it.slot]: it.id }, cls: 'thumb' })}</button>
+          <div class="item-name">${it.name}</div>
+          <button class="btn small item-btn${!owned && !canBuy ? ' poor' : ''}" data-act="main" data-silent ${worn && (it.slot === 'shirt' || it.slot === 'bg') ? 'disabled' : ''}>${action}</button>
+        </div>`;
+      }).join('');
+      grid.querySelectorAll('.item').forEach((card) => {
+        const it = AV.byId(card.dataset.id);
+        card.querySelector('[data-act="try"]').addEventListener('click', () => {
+          preview = preview && preview.id === it.id ? null : it;
+          S.play('swoosh'); drawBig(); FX.pop(big); drawGrid();
+        });
+        card.querySelector('[data-act="main"]').addEventListener('click', (e) => {
+          const owned = av.owned.includes(it.id) || it.price === 0;
+          if (!owned) {
+            if (store.credits < it.price) {
+              S.play('wrong'); FX.shake(card);
+              toast(`Dir fehlen noch <b>${it.price - store.credits} 🪙</b> – mach ein Quiz! 🎮`, 2600);
+              preview = it; drawBig();
+              return;
+            }
+            store.credits -= it.price;
+            av.owned.push(it.id);
+            av.equipped[it.slot] = it.id;
+            if (it.slot === 'dye') { /* Haarfarbe aus dem Shop ersetzt die Grundfarbe */ }
+            preview = null;
+            S.play('coin'); setTimeout(() => S.play('levelup'), 150);
+            FX.burstAt(card, 50);
+            FX.floatText(e.currentTarget, '−' + it.price + ' 🪙', 'coins');
+            toast(`🎉 <b>${it.name}</b> gehört jetzt dir!`, 2200);
+            document.getElementById('wallet').textContent = store.credits;
+          } else if (av.equipped[it.slot] === it.id) {
+            delete av.equipped[it.slot];
+            S.play('swoosh');
+          } else {
+            av.equipped[it.slot] = it.id;
+            preview = null;
+            S.play('select'); FX.pop(card);
+          }
+          changed(); drawGrid();
+        });
+      });
+    }
+
+    main.querySelectorAll('.slot-tab').forEach((b) => b.addEventListener('click', () => { slot = b.dataset.slot; preview = null; S.play('select'); drawBig(); drawGrid(); }));
+    main.querySelectorAll('[data-skin]').forEach((b) => b.addEventListener('click', () => { av.skin = +b.dataset.skin; S.play('select'); changed(); FX.pop(big); drawGrid(); }));
+    main.querySelectorAll('[data-hair]').forEach((b) => b.addEventListener('click', () => { av.hair = b.dataset.hair; S.play('select'); changed(); FX.pop(big); drawGrid(); }));
+    main.querySelectorAll('[data-hc]').forEach((b) => b.addEventListener('click', () => { av.hairColor = b.dataset.hc; delete av.equipped.dye; S.play('select'); changed(); FX.pop(big); drawGrid(); }));
+    drawBig(); markLook(); drawGrid();
+  }
+
+  // ---------- Einstellungen für Eltern (Claude-Zugang) ----------
+  hdr.settings.addEventListener('click', () => {
+    let dlg = document.getElementById('settings');
+    if (!dlg) {
+      dlg = document.createElement('dialog');
+      dlg.id = 'settings';
+      document.body.appendChild(dlg);
+    }
+    const proxy = window.TQ_CONFIG && window.TQ_CONFIG.proxyUrl;
+    dlg.innerHTML = `
+      <form method="dialog" class="settings" data-silent>
+        <h2>⚙️ Einstellungen für Eltern</h2>
+        ${proxy ? `<p>✅ Claude ist über den Schul-/Familien-Server eingerichtet. Hier musst du nichts tun.</p>` : `
+        <p>Für den Chat mit Claude braucht die App einen <b>Anthropic-API-Key</b>. Er wird <b>nur in diesem Browser auf diesem Gerät</b> gespeichert und nie ins Internet hochgeladen – außer direkt an Anthropic.</p>
+        <p class="warn">⚠️ Wer an diesem Gerät die Entwicklerwerkzeuge öffnet, kann den Key sehen. Nutze einen eigenen Key mit niedrigem Ausgabenlimit (in der Anthropic Console einstellbar). Für mehrere Kinder/eine Klasse ist ein Proxy sicherer (siehe <i>proxy/README.md</i> im Projekt).</p>
+        <label>API-Key<input type="password" id="api-key" autocomplete="off" placeholder="sk-ant-…" value="${TU.getKey() ? '••••••••••' : ''}"></label>
+        <div class="settings-status">${TU.getKey() ? '🟢 Ein Key ist gespeichert.' : '⚪ Kein Key gespeichert – die Fragen-Knöpfe funktionieren trotzdem.'}</div>`}
+        <div class="settings-actions">
+          ${proxy ? '' : '<button class="btn ghost" value="delete" type="submit">Key löschen</button><button class="btn" value="save" type="submit">Speichern</button>'}
+          <button class="btn ghost" value="close" type="submit">Schließen</button>
+        </div>
+      </form>`;
+    dlg.onclose = () => {
+      if (dlg.returnValue === 'save') {
+        const v = dlg.querySelector('#api-key').value.trim();
+        if (v && !v.startsWith('•')) { TU.setKey(v); toast('🔑 Key gespeichert'); S.play('correct'); }
+      } else if (dlg.returnValue === 'delete') {
+        TU.setKey(''); toast('Key gelöscht'); S.play('swoosh');
+      }
+      // Chat neu aufbauen, damit der Status (eingerichtet / nicht eingerichtet) stimmt
+      if (quiz && main.querySelector('.tutor-slot')) mountTutor(quiz.items[quiz.idx].topic, quiz.items[quiz.idx].q);
+    };
+    dlg.showModal();
+    S.play('select');
+  });
 
   // Für automatische Tests: aktuelle Frage auslesen
   window.TermQuest = { currentQuestion: () => (quiz ? quiz.items[quiz.idx].q : null) };

@@ -39,6 +39,23 @@ Funktioniert auf Computer, Tablet und Handy. Der Fortschritt wird nur lokal im B
   Ist ein Term gleichwertig, aber noch nicht fertig vereinfacht, gibt es ein „Fast!“ mit Hinweis statt „falsch“.
   Eingabe per Tastatur (`3a^2`, `3a²`, `2(x-1)`) oder Bildschirmtasten.
 * Alle Aufgaben werden zufällig erzeugt – es gibt immer neue.
+* **Avatar & Shop:** Für jedes abgeschlossene Quiz gibt es Credits 🪙 (5 pro Punkt + Sterne-Bonus).
+  Damit kauft man Oberteile, Hüte, Brillen, Extras, Haarfarben und Hintergründe. Aussehen (Haut, Frisur, Haarfarbe) ist kostenlos.
+* **Frag Claude:** Unter jeder Quizfrage gibt es einen Chat mit Claude und Knöpfe mit typischen Fragen zum Thema.
+  Die Knöpfe antworten mit fest hinterlegten Erklärungen (ohne KI, immer verfügbar).
+  Solange eine Aufgabe nicht beantwortet ist, gibt Claude nur Tipps und verrät die Lösung nicht.
+
+## Claude einrichten – und wo der API-Key NICHT hingehört
+
+**Niemals einen API-Key ins Repository legen** (auch nicht als `key.txt`): Das Repository und die
+GitHub-Pages-Seite sind öffentlich, jede Datei ist für alle abrufbar.
+
+* **Eine Familie:** Ein Elternteil öffnet ⚙️ oben rechts und trägt den Key ein. Er wird nur im Browser
+  dieses Geräts gespeichert. In der Anthropic Console ein niedriges Ausgabenlimit setzen.
+* **Klasse / mehrere Kinder:** Den Proxy aus [`proxy/`](proxy/README.md) betreiben (Key liegt dort als Secret)
+  und seine Adresse in `js/config.js` bei `proxyUrl` eintragen.
+
+Die App lädt das offizielle Anthropic-SDK zur Laufzeit von jsDelivr (Version in `js/config.js`).
 
 ## Aufbau
 
@@ -50,7 +67,11 @@ js/sound.js      Töne (Web Audio) und Vorlesen (speechSynthesis)
 js/fx.js         Konfetti & Animationen
 js/visuals.js    Zufall, Rechenbäume und Figuren als SVG
 js/topics.js     Inhalte und Aufgaben-Generatoren der 10 Themen
-js/app.js        Navigation, Quiz, Fortschritt
+js/app.js        Navigation, Quiz, Fortschritt, Shop, Einstellungen
+js/avatar.js     Avatar (SVG) und Shop-Artikel
+js/tutor.js      Chat mit Claude, Fragen-Knöpfe mit Antworten
+js/config.js     Einstellungen für den Tutor (kein Key!)
+proxy/           optionaler Proxy, der den Key sicher hält
 tests/           node tests/mathterm.test.js · node tests/generators.test.js
 ```
 

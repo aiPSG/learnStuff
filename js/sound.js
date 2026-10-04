@@ -64,6 +64,7 @@
       seq.forEach(([f, t]) => tone(f, t, 0.2, { type: 'triangle', vol: 0.15 }));
       tone(1047, 1.08, 0.6, { type: 'triangle', vol: 0.15 });
     },
+    coin() { tone(988, 0, 0.08, { type: 'square', vol: 0.07 }); tone(1319, 0.07, 0.25, { type: 'square', vol: 0.07 }); },
     tick() { tone(1200, 0, 0.025, { type: 'square', vol: 0.04 }); },
   };
 

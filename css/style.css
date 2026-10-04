@@ -358,6 +358,98 @@ html { background: var(--bg); }
 }
 .toast.show { transform: translate(-50%, 0); }
 
+/* Credits & Avatar in der Kopfzeile */
+.coin-chip { background: #fef3c7; color: #92400e; font-weight: 800; padding: 6px 12px; border-radius: 999px; font-size: .9rem; white-space: nowrap; }
+.hdr-avatar { display: block; width: 42px; height: 42px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 3px #fff, 0 2px 8px rgba(0,0,0,.15); transition: transform .2s; flex: none; }
+.hdr-avatar:hover { transform: scale(1.08) rotate(-4deg); }
+.avatar-svg { display: block; width: 100%; height: auto; }
+.lvl-avatar { display: block; width: 110px; height: 110px; margin: 0 auto 6px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 4px rgba(255,255,255,.7); animation: bob 2.4s ease-in-out infinite; }
+.shop-btn { --c: #fde047; color: #713f12; margin-top: 8px; }
+.float-text.coins { color: #b45309; }
+.coin-stat b { color: #b45309; }
+
+/* Shop */
+.shop-title { font-size: clamp(1.6rem, 5vw, 2.2rem); }
+.shop { display: grid; grid-template-columns: 290px 1fr; gap: 18px; align-items: start; }
+.shop-side { position: sticky; top: 76px; text-align: center; }
+.shop-avatar { position: relative; width: 200px; max-width: 100%; margin: 0 auto; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 6px #ede9fe; }
+.try-tag { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); background: rgba(30,27,75,.85); color: #fff; font-weight: 800; font-size: .8rem; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
+.wallet { font-size: 1.4rem; font-weight: 800; margin-top: 12px; color: #92400e; }
+.wallet-hint { font-size: .85rem; color: var(--ink-soft); margin: 4px 0 12px; }
+.shop-side h2 { font-size: 1.05rem; text-align: left; margin-top: 8px; }
+.shop-side h2 small { color: var(--ink-soft); font-weight: 600; }
+.look-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.swatch { width: 34px; height: 34px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 2px var(--line); cursor: pointer; }
+.swatch.on { box-shadow: 0 0 0 3px var(--brand); transform: scale(1.1); }
+.look-btn { border: 2px solid var(--line); background: #fff; border-radius: 10px; padding: 4px 10px; font-weight: 700; cursor: pointer; font-size: .88rem; }
+.look-btn.on { background: var(--brand); border-color: var(--brand); color: #fff; }
+.slot-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.slot-tab { border: 0; background: #fff; border-radius: 999px; padding: 8px 14px; font-weight: 800; cursor: pointer; box-shadow: var(--shadow); }
+.slot-tab.on { background: var(--brand); color: #fff; }
+.item-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.item { background: #fff; border-radius: 18px; padding: 10px; text-align: center; box-shadow: var(--shadow); border: 3px solid transparent; transition: transform .2s; animation: cardIn .4s both; }
+.item:hover { transform: translateY(-3px); }
+.item.worn { border-color: #22c55e; }
+.item.trying { border-color: #f59e0b; }
+.item-thumb { border: 0; padding: 0; background: none; cursor: pointer; width: 100%; border-radius: 14px; overflow: hidden; display: block; }
+.item-name { font-weight: 800; margin: 6px 0; font-size: .95rem; }
+.item-btn { width: 100%; }
+.item.owned .item-btn { --c: #10b981; }
+.item-btn.poor { --c: #9ca3af; }
+
+/* Chat mit Claude */
+.tutor { margin-top: 18px; border-top: 6px solid #d97757; }
+.tutor-head { display: flex; gap: 12px; align-items: center; margin-bottom: 10px; }
+.tutor-head h2 { margin: 0; font-size: 1.25rem; }
+.tutor-head small { color: var(--ink-soft); }
+.tutor-bot { font-size: 2rem; width: 54px; height: 54px; flex: none; display: grid; place-items: center; background: #fdf0ea; border-radius: 16px; animation: bob 3s ease-in-out infinite; }
+.faq-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.faq-chip { border: 2px solid #f5d0c0; background: #fff7f3; color: var(--ink); border-radius: 999px; padding: 6px 12px; font-weight: 700; font-size: .9rem; cursor: pointer; text-align: left; transition: background .15s, transform .1s; }
+.faq-chip:hover { background: #fde7dc; }
+.faq-chip:active { transform: scale(.96); }
+.faq-chip.tip { border-color: #fcd34d; background: #fffbeb; }
+.chat-log { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow-y: auto; padding: 2px; }
+.chat-log:empty { display: none; }
+.bubble { max-width: 85%; padding: 10px 14px; border-radius: 18px; line-height: 1.45; animation: slideL .25s both; overflow-wrap: anywhere; }
+.bubble.me { align-self: flex-end; background: var(--brand); color: #fff; border-bottom-right-radius: 6px; }
+.bubble.bot { align-self: flex-start; background: #f3f4f6; border-bottom-left-radius: 6px; }
+.bubble.faq { background: #ecfdf5; }
+.bubble.error { background: var(--bad-bg); }
+.bubble.info { background: var(--info-bg); }
+.faq-src { font-size: .75rem; color: var(--ink-soft); margin-top: 4px; }
+.typing i { display: inline-block; width: 7px; height: 7px; margin: 0 2px; border-radius: 50%; background: #9ca3af; animation: typing 1s infinite; }
+.typing i:nth-child(2) { animation-delay: .15s; }
+.typing i:nth-child(3) { animation-delay: .3s; }
+@keyframes typing { 50% { transform: translateY(-5px); opacity: .5; } }
+.chat-form { display: flex; gap: 8px; margin-top: 12px; }
+.chat-input { flex: 1; min-width: 0; font: inherit; border: 2px solid var(--line); border-radius: 14px; padding: 9px 12px; }
+.chat-input:focus { outline: none; border-color: #d97757; }
+.chat-form .btn { --c: #d97757; }
+.chat-form.busy { opacity: .6; pointer-events: none; }
+
+/* Einstellungen */
+dialog#settings { border: 0; border-radius: var(--radius); padding: 0; max-width: min(520px, calc(100vw - 32px)); box-shadow: var(--shadow); color: var(--ink); }
+dialog#settings::backdrop { background: rgba(30, 27, 75, .45); }
+.settings { padding: 22px; }
+.settings label { display: block; font-weight: 800; margin: 10px 0; }
+.settings input { display: block; width: 100%; font: inherit; border: 2px solid var(--line); border-radius: 12px; padding: 9px 12px; margin-top: 4px; }
+.settings .warn { background: var(--warn-bg); border-radius: 12px; padding: 10px 12px; font-size: .92rem; }
+.settings-status { font-size: .9rem; color: var(--ink-soft); }
+.settings-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+@media (max-width: 760px) {
+  .shop { grid-template-columns: 1fr; }
+  .shop-side { position: static; }
+}
+@media (max-width: 640px) {
+  .coin-chip { padding: 5px 9px; }
+  .hdr-right { gap: 6px; }
+  .icon-btn { width: 38px; height: 38px; font-size: 1.05rem; }
+  .hdr-avatar { width: 38px; height: 38px; }
+  .item-grid { grid-template-columns: 1fr 1fr; }
+  .bubble { max-width: 92%; }
+}
+
 /* Handy */
 @media (max-width: 640px) {
   body { font-size: 16px; }
