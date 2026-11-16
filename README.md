@@ -1,3 +1,12 @@
+# learnStuff – Lern-Apps 🧮🔬
+
+Zwei Lern-Apps mit gemeinsamer Technik, gemeinsamen Credits und einem gemeinsamen Avatar:
+
+| App | Fach | Adresse |
+|---|---|---|
+| **TermQuest** 🧮 | Mathe: Selbstdiagnosebogen „Terme II“ | `/` |
+| **ZellQuest** 🔬 | Bio 8: Checkliste Klassenarbeit „Zellen“ | `/bio/` |
+
 # TermQuest 🧮 – Terme II
 
 Eine Lern-App für Schülerinnen und Schüler (ca. 12–13 Jahre) zu allen zehn Punkten des
@@ -57,7 +66,45 @@ GitHub-Pages-Seite sind öffentlich, jede Datei ist für alle abrufbar.
 
 Die App lädt das offizielle Anthropic-SDK zur Laufzeit von jsDelivr (Version in `js/config.js`).
 
-## Aufbau
+# ZellQuest 🔬 – Zellen & Mikroskop
+
+Zur **Checkliste Klassenarbeit Bio 8a**. Neun Themen – genau die Zeilen der Checkliste (inkl. Buchverweise),
+Selbsteinschätzung mit den Spalten „…noch nicht (gut)“ / „…sicher“, eine **Klassenarbeit-Probe** und ein **Glossar**
+mit Karteikarten (die Checkliste empfiehlt, eines anzulegen).
+
+| # | Thema | Lernen | Üben |
+|---|---|---|---|
+| 1 | Was ist eine Zelle? | Einzeller/Vielzeller, Kennzeichen des Lebens, Größen | Auswahl, Richtig/Falsch, Reihenfolge, Zahl |
+| 2 | Bestandteile des Mikroskops | antippbares Mikroskop, Lichtweg, Vergrößerung | Teil antippen, markiertes Teil benennen, Vergrößerung rechnen |
+| 3 | Vorgehen beim Mikroskopieren | Schritte, Nasspräparat, Regeln | Schritte ordnen, Regeln begründen |
+| 4 | Zellen skizzieren | Skizzenregeln, beschriftete Zellen | „Was fehlt in der Skizze?“, Mehrfachauswahl |
+| 5 | Zellbestandteile benennen | Zellen zum Antippen, Vergleichstabelle | Teil antippen, markierten Teil benennen |
+| 6 | Funktionen erklären | „Zelle als Fabrik“, Funktionsliste | Funktion ↔ Bestandteil |
+| 7 | Zelltyp erkennen & begründen | Detektiv-Fragen, Fallen, Detektiv-Spiel | Zelltyp aus Bild/Beschreibung, Begründung wählen |
+| 8 | Bakterien vs. Tier-/Pflanzenzelle | Pro-/Eukaryoten, Unterschiede, Gemeinsamkeiten | Richtig/Falsch, Mehrfachauswahl, Antippen |
+| 9 | Aufgaben rund um Zellen | Lerntipps, typische Aufgaben, Größe berechnen | Anwenden, Rechnen + Mix aus allen Themen |
+
+Die Inhalte entsprechen dem üblichen Stoff der 7./8. Klasse. **Mit Heft, Buch und den Its-learning-Materialien
+abgleichen** – die App kennt diese Unterlagen nicht.
+
+## Aufbau (beide Apps)
+
+`js/app.js` ist die gemeinsame Lern-App (Navigation, Quiz mit allen Fragetypen, Shop, Chat).
+Was fachspezifisch ist, steht in einer Fach-Datei: `js/subject-terme.js` bzw. `bio/subject.js`.
+Ein neues Fach braucht nur einen eigenen Ordner mit `index.html`, Themen-Datei und `subject.js`.
+
+```
+bio/index.html   ZellQuest-Seite
+bio/cells.js     Zell- und Mikroskop-Diagramme (SVG, antippbar)
+bio/topics.js    Inhalte, Aufgaben, Glossar, Fragen-Knöpfe
+bio/subject.js   Fach-Konfiguration ZellQuest
+js/subject-terme.js  Fach-Konfiguration TermQuest
+```
+
+Fragetypen: Auswahl (`mc`), Zahl (`num`), Term (`term`), Diagramm antippen (`hotspot`),
+Mehrfachauswahl (`multi`), Reihenfolge (`order`).
+
+## Aufbau TermQuest
 
 ```
 index.html
@@ -80,4 +127,9 @@ tests/           node tests/mathterm.test.js · node tests/generators.test.js
 ```bash
 node tests/mathterm.test.js     # Parser & Prüfung
 node tests/generators.test.js   # erzeugt 15.000+ Aufgaben und prüft, dass jede Musterlösung akzeptiert wird
+node tests/bio.test.js          # erzeugt 18.000+ Bio-Aufgaben und prüft sie
+# Browser-Test (beide Apps): Server starten, dann
+python3 -m http.server 8765 &
+NODE_PATH=$(npm root -g) node tests/e2e.js http://localhost:8765/
+NODE_PATH=$(npm root -g) node tests/e2e.js http://localhost:8765/bio/
 ```

@@ -1,0 +1,91 @@
+/* ZellQuest – Ergänzungen zum gemeinsamen Stil */
+body.bio { background: linear-gradient(160deg, #ecfdf5 0%, #f0f9ff 50%, #fdf4ff 100%) fixed; }
+body.bio .logo b { color: #059669; }
+
+/* Diagramme */
+.diagram { display: block; width: 100%; max-width: 460px; height: auto; margin: 6px auto; }
+.diagram.labeled { max-width: 640px; }
+.diagram.mikroskop { max-width: 260px; }
+.hotspot .diagram { max-width: 560px; }
+.hotspot .diagram.mikroskop { max-width: 360px; }
+.diagram.mikroskop.labeled { max-width: 560px; }
+.c-plasma-p { fill: #fef9c3; }
+.c-plasma-t { fill: #ffe4e6; }
+.c-plasma-b { fill: #fef3c7; }
+.c-wall-p { fill: #a3c585; stroke: #4d7c0f; stroke-width: 1.5; }
+.c-wall-b { fill: #fcd34d; stroke: #b45309; stroke-width: 1.5; }
+.c-mem-p, .c-mem-b { fill: none; stroke: #ca8a04; stroke-width: 2.5; }
+.c-mem-t { fill: none; stroke: #e11d48; stroke-width: 3; }
+.c-vac { fill: #bae6fd; stroke: #0284c7; stroke-width: 2; }
+.c-nuc { fill: #c4b5fd; stroke: #6d28d9; stroke-width: 2.5; }
+.c-nucleolus { fill: #7c3aed; }
+.c-mito { fill: #fb923c; stroke: #c2410c; stroke-width: 1.5; }
+.c-mito-in { fill: none; stroke: #9a3412; stroke-width: 1.3; }
+.c-chloro { fill: #22c55e; stroke: #15803d; stroke-width: 1.5; }
+.c-chloro-in { fill: none; stroke: #14532d; stroke-width: 1.2; }
+.c-ribo { fill: #475569; }
+.c-caps { fill: rgba(186, 230, 253, .55); stroke: #38bdf8; stroke-width: 2; stroke-dasharray: 6 4; }
+.c-dna { fill: none; stroke: #7c3aed; stroke-width: 3; }
+.c-plasmid { fill: none; stroke: #db2777; stroke-width: 2.5; }
+.c-flag, .c-pili { fill: none; stroke: #475569; stroke-width: 3; stroke-linecap: round; }
+.c-pili { stroke-width: 2; }
+.hit { fill: transparent; }
+.hit-stroke { fill: none; stroke: transparent; stroke-width: 10; }
+.hit-stroke.wide { stroke-width: 16; }
+.m-dark { fill: #1e293b; }
+.m-arm { fill: #64748b; }
+.m-lamp { fill: #fde047; stroke: #a16207; stroke-width: 2; }
+.m-ray { stroke: #f59e0b; stroke-width: 2.5; stroke-linecap: round; }
+.m-blende { fill: #0d9488; }
+.m-clip { fill: #cbd5e1; stroke: #475569; stroke-width: 1.5; }
+.m-knob { fill: #94a3b8; stroke: #1e293b; stroke-width: 3; }
+.m-knob-in { fill: #1e293b; }
+.m-tube { fill: #94a3b8; stroke: #334155; stroke-width: 2; }
+.m-rev { fill: #475569; }
+.m-obj { fill: #e2e8f0; stroke: #334155; stroke-width: 1.5; }
+.label line { stroke: #334155; stroke-width: 1.4; }
+.label circle { fill: #334155; }
+.label text { font: 700 15px var(--font-body); fill: var(--ink); }
+.label.hs-active text { fill: #b45309; }
+.mark-arrow line { stroke: #dc2626; stroke-width: 4; stroke-linecap: round; }
+.mark-arrow circle { fill: #dc2626; }
+.mark-arrow { animation: arrowPulse 1.2s ease-in-out infinite; }
+@keyframes arrowPulse { 50% { opacity: .55; } }
+
+/* Lern-Elemente */
+.explore .slot-tabs { justify-content: center; }
+.explore-svg { background: #fff; border-radius: 16px; padding: 6px; }
+.clickable [data-part] { cursor: pointer; }
+.clickable [data-part]:hover { filter: brightness(1.1) drop-shadow(0 0 4px rgba(245, 158, 11, .9)); }
+[data-part].hs-active { filter: drop-shadow(0 0 3px #f59e0b) drop-shadow(0 0 8px #fbbf24); }
+.explore-info { margin-top: 10px; background: #fffbeb; border-radius: 14px; padding: 10px 14px; min-height: 3em; text-align: left; }
+.explore-info small { display: block; color: var(--ink-soft); margin-top: 4px; }
+.detective .row-btns { margin: 10px 0; }
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.info-box { background: #f0fdf4; border-radius: 16px; padding: 12px 14px; }
+.info-box b { font-family: var(--font-head); font-size: 1.15rem; }
+.info-box p { margin: 4px 0; color: var(--ink-soft); }
+.size-scale div { margin: 8px 0; font-weight: 700; font-size: .95rem; }
+.size-scale span { display: block; height: 14px; min-width: 6px; border-radius: 99px; background: linear-gradient(90deg, #34d399, #3b82f6); margin-bottom: 3px; }
+.light-path { background: #f0f9ff; border-radius: 14px; padding: 12px; font-weight: 800; text-align: center; line-height: 2; }
+.decision .q { font-weight: 800; margin-top: 10px; }
+.decision .a { background: #f0fdf4; border-radius: 12px; padding: 8px 12px; margin: 4px 0 0 18px; }
+.compare td:not(:first-child), .compare th:not(:first-child) { text-align: center; }
+.glossary-list dt { font-weight: 800; margin-top: 10px; color: var(--c); }
+.glossary-list dd { margin: 2px 0 0; }
+.glossary-list small { display: block; color: var(--ink-soft); }
+
+/* Glossar-Seite */
+.gloss-tools { display: flex; gap: 8px; margin: 12px 0; }
+.gloss-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.gloss-card { position: relative; min-height: 120px; border: 0; border-radius: 18px; padding: 14px; cursor: pointer; background: #fff; box-shadow: var(--shadow); border-bottom: 5px solid #10b981; font: inherit; text-align: center; perspective: 600px; transition: transform .35s; }
+.gloss-card .front { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; display: grid; place-items: center; min-height: 90px; }
+.gloss-card .back { display: none; font-size: .95rem; text-align: left; }
+.gloss-card.flipped { background: #ecfdf5; animation: flipIn .4s; }
+.gloss-card.flipped .front { display: none; }
+.gloss-card.flipped .back { display: block; }
+
+@media (max-width: 640px) {
+  .label text { font-size: 17px; }
+  .options.tf { grid-template-columns: 1fr 1fr; }
+}

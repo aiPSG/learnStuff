@@ -82,6 +82,10 @@
     ],
   };
 
+  // Fach-spezifische Einstellungen (Standard: Mathe/Terme). Andere Fächer rufen Tutor.configure() auf.
+  let SUBJECT = { faq: FAQ, about: null, tagline: 'Dein KI-Mathe-Tutor – gibt Tipps, aber verrät keine Lösungen, solange du rechnest.', placeholder: 'Deine Frage zu Termen …' };
+  function configure(cfg) { SUBJECT = Object.assign({}, SUBJECT, cfg); }
+
   // ---------- Zugang ----------
   function getKey() { try { return localStorage.getItem(KEY_STORE) || ''; } catch (e) { return ''; } }
   function setKey(k) { try { if (k) localStorage.setItem(KEY_STORE, k); else localStorage.removeItem(KEY_STORE); } catch (e) { /* ignore */ } client = null; }
@@ -109,13 +113,13 @@
   function countUse() { const u = usageToday(); u.n++; try { localStorage.setItem(USAGE_STORE, JSON.stringify(u)); } catch (e) { /* ignore */ } }
 
   function systemPrompt(ctx) {
-    let s = `Du bist Claude, der freundliche Mathe-Tutor in der Lern-App „TermQuest“. Du hilfst Schülerinnen und Schülern der 7./8. Klasse (12–13 Jahre) in Deutschland beim Thema Terme: Variablen, Terme, Gleichungen, Kommutativ- und Assoziativgesetz, Rechenbaum und Wortform, Termwerte berechnen, gleichartige Terme zusammenfassen, Produkte vereinfachen, Minusklammern, Distributivgesetz (ausmultiplizieren, ausklammern), Produkte von Summen, Terme zu Flächen und Volumen.
+    let s = (SUBJECT.about || `Du bist Claude, der freundliche Mathe-Tutor in der Lern-App „TermQuest“. Du hilfst Schülerinnen und Schülern der 7./8. Klasse (12–13 Jahre) in Deutschland beim Thema Terme: Variablen, Terme, Gleichungen, Kommutativ- und Assoziativgesetz, Rechenbaum und Wortform, Termwerte berechnen, gleichartige Terme zusammenfassen, Produkte vereinfachen, Minusklammern, Distributivgesetz (ausmultiplizieren, ausklammern), Produkte von Summen, Terme zu Flächen und Volumen.`) + `
 
 So antwortest du:
 - Auf Deutsch, kurz (höchstens etwa 120 Wörter), einfach und ermutigend. Ein kleines Beispiel hilft oft mehr als eine lange Erklärung.
-- Mathe in einfacher Schreibweise mit ·, −, ², : und Klammern. Kein LaTeX, keine Tabellen.
-- Benutze die Fachbegriffe aus dem Unterricht (Summand, Faktor, Koeffizient, gleichartig, ausmultiplizieren, ausklammern …).
-- Bleib beim Lernen. Bei anderen Themen lenkst du freundlich zurück zur Mathe. Frag nicht nach persönlichen Daten.
+- Formeln in einfacher Schreibweise mit ·, −, ², : und Klammern. Kein LaTeX, keine Tabellen.
+- Benutze die Fachbegriffe aus dem Unterricht.
+- Bleib beim Lernen. Bei anderen Themen lenkst du freundlich zurück zum Schulthema. Frag nicht nach persönlichen Daten.
 - Wenn das Kind traurig oder gestresst wirkt oder etwas Ernstes erzählt, reagiere freundlich und empfiehl, mit Eltern oder einer Lehrkraft zu sprechen.`;
     if (ctx && ctx.question) {
       s += `\n\nDas Kind übt gerade das Thema „${ctx.topicTitle}“. Aktuelle Aufgabe: ${ctx.question}`;
@@ -176,13 +180,13 @@ So antwortest du:
    */
   function mount(container, opts) {
     const S = root.Sound, FX = root.FX;
-    const faq = FAQ[opts.topic.id] || [];
+    const faq = SUBJECT.faq[opts.topic.id] || [];
     const history = opts.history;
     container.innerHTML = `
       <section class="card tutor" aria-label="Frag Claude">
         <div class="tutor-head">
           <div class="tutor-bot" aria-hidden="true">🤖</div>
-          <div><h2>Frag Claude</h2><small>${available() ? 'Dein KI-Mathe-Tutor – gibt Tipps, aber verrät keine Lösungen, solange du rechnest.' : 'Die Fragen-Knöpfe funktionieren immer. Für eigene Fragen muss ein Elternteil Claude unter ⚙️ einrichten.'}</small></div>
+          <div><h2>Frag Claude</h2><small>${available() ? SUBJECT.tagline : 'Die Fragen-Knöpfe funktionieren immer. Für eigene Fragen muss ein Elternteil Claude unter ⚙️ einrichten.'}</small></div>
         </div>
         <div class="faq-chips" data-silent>
           <button class="faq-chip tip" data-tip="1">💡 Gib mir einen Tipp zu dieser Aufgabe</button>
@@ -190,7 +194,7 @@ So antwortest du:
         </div>
         <div class="chat-log" aria-live="polite"></div>
         <form class="chat-form" data-silent>
-          <input class="chat-input" type="text" maxlength="400" autocomplete="off" placeholder="${available() ? 'Deine Frage zu Termen …' : 'Claude ist noch nicht eingerichtet'}" ${available() ? '' : 'disabled'} aria-label="Frage an Claude">
+          <input class="chat-input" type="text" maxlength="400" autocomplete="off" placeholder="${available() ? SUBJECT.placeholder : 'Claude ist noch nicht eingerichtet'}" ${available() ? '' : 'disabled'} aria-label="Frage an Claude">
           <button class="btn small" type="submit" ${available() ? '' : 'disabled'}>Senden ➤</button>
         </form>
       </section>`;
@@ -270,5 +274,5 @@ So antwortest du:
     });
   }
 
-  root.Tutor = { mount, available, mode, getKey, setKey, FAQ, systemPrompt };
+  root.Tutor = { mount, configure, available, mode, getKey, setKey, FAQ, systemPrompt };
 })(window);

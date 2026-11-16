@@ -1,40 +1,54 @@
 /*
- * TermQuest – App-Logik: Navigation, Lernkarten, Quiz, Fortschritt.
+ * Gemeinsame App-Logik für alle Fächer: Navigation, Lernkarten, Quiz, Fortschritt, Shop.
+ * Alles Fachspezifische kommt aus window.Subject (z. B. js/subject-terme.js).
  */
 (function () {
   'use strict';
 
   const S = window.Sound, FX = window.FX, M = window.MathTerm, R = window.Rand, AV = window.Avatar, TU = window.Tutor;
-  const TOPICS = window.Topics.list;
+  const SUBJ = window.Subject;
+  const TOPICS = SUBJ.topics;
   const esc = window.Visuals.esc;
   const main = document.getElementById('main');
 
-  const KEY = 'termquest-v1';
-  const SELF = ['Das kann ich anderen erklären.', 'Dabei mache ich nur selten Fehler.', 'Das muss ich noch üben.', 'Dabei brauche ich Hilfe von anderen.'];
-  const SELF_ICON = ['🧑‍🏫', '✅', '🏋️', '🙋'];
-  const LEVELS = ['Term-Neuling', 'Variablen-Entdecker', 'Klammer-Knacker', 'Term-Profi', 'Algebra-Ass', 'Term-Meister', 'Mathe-Legende'];
-  const QUIZ_LEN = 8;
+  const KEY = SUBJ.key;
+  const WALLET = 'learnstuff-wallet'; // Credits & Avatar teilen sich alle Fächer
+  const SELF = SUBJ.self;
+  const SELF_ICON = SUBJ.selfIcons;
+  const LEVELS = SUBJ.levels;
+  const QUIZ_LEN = SUBJ.quizLength || 8;
   const PRAISE = ['Richtig! 🎉', 'Stark! 💪', 'Super gemacht! ⭐', 'Genau so! 🙌', 'Klasse! 🚀', 'Volltreffer! 🎯'];
-  const HINTS = {
-    4: 'Tipp: Setze negative Zahlen in Klammern und denk an Punkt vor Strich.',
-    5: 'Tipp: Fasse nur Terme mit genau denselben Variablen und Hochzahlen zusammen.',
-    6: 'Tipp: Multipliziere erst die Zahlen, dann die Variablen. Zähle die Minuszeichen!',
-    7: 'Tipp: Minus vor der Klammer dreht ALLE Vorzeichen in der Klammer um.',
-    8: 'Tipp: Jeder Summand in der Klammer wird mit dem Faktor multipliziert – Vorzeichen beachten!',
-    9: 'Tipp: Jeder mit jedem – und am Ende gleichartige Terme zusammenfassen.',
-    10: 'Tipp: Fläche = Länge · Breite. Zusammengesetzte Seiten gehören in Klammern.',
-  };
+  const HINTS = SUBJ.hints || {};
+  const isConfident = (i) => (SUBJ.selfConfident || []).includes(i);
+  if (SUBJ.tutor) TU.configure(SUBJ.tutor);
 
   // ---------- Speicher ----------
   function load() {
     const def = { name: '', xp: 0, best: {}, self: {}, plays: {}, test: null, credits: 0, avatar: AV.defaults() };
     let st;
     try { st = Object.assign(def, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) { st = def; }
+    // Gemeinsame Geldbörse: beim ersten Mal aus dem alten Fach-Speicher übernehmen
+    let w = null;
+    try { w = JSON.parse(localStorage.getItem(WALLET) || 'null'); } catch (e) { w = null; }
+    if (!w) {
+      // Noch keine gemeinsame Geldbörse: Credits/Avatar aus TermQuest (vor der Umstellung) übernehmen
+      try {
+        const legacy = JSON.parse(localStorage.getItem('termquest-v1') || 'null');
+        if (legacy && (legacy.credits || legacy.avatar)) w = { credits: legacy.credits || 0, avatar: legacy.avatar };
+      } catch (e) { /* ignore */ }
+    }
+    if (w) { st.credits = w.credits || 0; st.avatar = w.avatar; }
     st.avatar = Object.assign(AV.defaults(), st.avatar || {});
     return st;
   }
   const store = load();
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) { /* privater Modus */ } }
+  function save() {
+    try {
+      const { credits, avatar, ...progress } = store;
+      localStorage.setItem(KEY, JSON.stringify(progress));
+      localStorage.setItem(WALLET, JSON.stringify({ credits, avatar }));
+    } catch (e) { /* privater Modus */ }
+  }
 
   // Jedes Level braucht mehr XP: 100, 300, 600, 1000, 1500, 2100, …
   const levelStart = (l) => 50 * l * (l + 1);
@@ -130,6 +144,9 @@
       startQuiz('test');
     } else if (parts[0] === 'shop') {
       renderShop();
+    } else if (parts[0] === 'p' && SUBJ.pages && SUBJ.pages[parts[1]]) {
+      document.title = SUBJ.appName;
+      SUBJ.pages[parts[1]](main);
     } else {
       renderHome();
     }
@@ -140,15 +157,14 @@
 
   // ---------- Startseite ----------
   function renderHome() {
-    document.title = 'TermQuest – Terme II';
+    document.title = SUBJ.homeTitle;
     const l = level();
     const totalStars = TOPICS.reduce((s, t) => s + starsFor(store.best[t.id] || 0), 0);
     main.innerHTML = `
       <section class="hero">
         <div class="hero-text">
           <h1>Hallo <input id="name" class="name-input" maxlength="20" placeholder="Name" value="${esc(store.name)}" aria-label="Dein Name" autocomplete="off">! 👋</h1>
-          <p>Willkommen bei <b>TermQuest</b>. Hier lernst und übst du alles aus dem Selbstdiagnosebogen <b>„Terme II“</b>.
-          Wähle ein Thema, lies die Erklärung und sammle beim Üben Sterne ⭐ und XP!</p>
+          <p>${SUBJ.intro}</p>
         </div>
         <div class="level-card">
           <a class="lvl-avatar" href="#/shop" aria-label="Avatar anziehen">${AV.render(store.avatar)}</a>
@@ -160,10 +176,11 @@
         </div>
       </section>
       <div class="home-actions">
-        <a class="btn big test-btn" href="#/test">🏆 Großer Test <small>2 Fragen zu jedem Thema</small></a>
+        <a class="btn big test-btn" href="#/test">🏆 ${SUBJ.test.title} <small>${SUBJ.test.sub}</small></a>
+        ${(SUBJ.extraHome || []).map((x) => `<a class="btn big ghost" href="${x.href}">${x.label}</a>`).join('')}
         ${store.test ? `<div class="last-test">Letzter Test: <b>${store.test.score} / ${store.test.max}</b> Punkte</div>` : ''}
       </div>
-      <h2 class="section-title">Deine 10 Themen</h2>
+      <h2 class="section-title">Deine ${TOPICS.length} Themen</h2>
       <div class="topic-grid">
         ${TOPICS.map((t) => {
           const st = starsFor(store.best[t.id] || 0);
@@ -179,7 +196,8 @@
           </a>`;
         }).join('')}
       </div>
-      <p class="footnote">Dein Fortschritt wird nur auf diesem Gerät gespeichert. <button class="linklike" id="reset">Fortschritt zurücksetzen</button></p>`;
+      ${(SUBJ.otherApps || []).length ? `<div class="other-apps">Noch mehr lernen: ${SUBJ.otherApps.map((a) => `<a class="btn small ghost" href="${a.href}">${a.label}</a>`).join(' ')}</div>` : ''}
+      <p class="footnote">Dein Fortschritt wird nur auf diesem Gerät gespeichert. Credits & Avatar gelten in allen Fächern. <button class="linklike" id="reset">Fortschritt zurücksetzen</button></p>`;
 
     const name = document.getElementById('name');
     const fit = () => { name.style.width = Math.max(4, (name.value || name.placeholder).length + 1) + 'ch'; };
@@ -190,8 +208,8 @@
       if (store.name) { toast(`Schön, dass du da bist, ${esc(store.name)}! 😊`); S.play('select'); }
     });
     document.getElementById('reset').addEventListener('click', () => {
-      if (confirm('Wirklich alle Sterne, XP und Einschätzungen löschen?')) {
-        Object.assign(store, { xp: 0, best: {}, self: {}, plays: {}, test: null, credits: 0, avatar: AV.defaults() });
+      if (confirm(`Wirklich alle Sterne, XP und Einschätzungen in ${SUBJ.appName} löschen? (Credits und Avatar bleiben.)`)) {
+        Object.assign(store, { xp: 0, best: {}, self: {}, plays: {}, test: null });
         save(); updateHeader(); renderHome(); S.play('swoosh');
       }
     });
@@ -201,7 +219,7 @@
   // ---------- Themenseite ----------
   function renderTopic(id) {
     const t = TOPICS[id - 1];
-    document.title = `${t.title} – TermQuest`;
+    document.title = `${t.title} – ${SUBJ.appName}`;
     let card = 0;
     main.innerHTML = `
       <div class="topic-head" style="--c:${t.color}">
@@ -223,7 +241,7 @@
         <h2>So geht es mir bei diesem Thema:</h2>
         <div class="self-chips">${SELF.map((s, i) => `<button class="chip${store.self[t.id] === i ? ' on' : ''}" data-i="${i}" data-silent aria-pressed="${store.self[t.id] === i}">${SELF_ICON[i]} ${s}</button>`).join('')}</div>
       </section>
-      ${t.book ? `<section class="card book-card"><h2>📚 Mehr Übungen im Buch</h2><p>${t.book}</p><small>(Angaben vom Selbstdiagnosebogen)</small></section>` : ''}
+      ${t.book ? `<section class="card book-card"><h2>📚 Mehr Übungen im Buch</h2><p>${t.book}</p><small>${SUBJ.bookNote || ''}</small></section>` : ''}
       <div class="topic-nav">
         ${id > 1 ? `<a class="btn ghost" href="#/t/${id - 1}">← Thema ${id - 1}</a>` : '<span></span>'}
         ${id < TOPICS.length ? `<a class="btn ghost" href="#/t/${id + 1}">Thema ${id + 1} →</a>` : '<span></span>'}
@@ -244,7 +262,7 @@
       box.classList.remove('slide-l', 'slide-r');
       void box.offsetWidth;
       box.classList.add(dir < 0 ? 'slide-r' : 'slide-l');
-      if (c.widget) window.Topics.widgets[c.widget](box);
+      if (c.widget) SUBJ.widgets[c.widget](box);
       dots.forEach((d, k) => d.classList.toggle('on', k === i));
       prev.disabled = i === 0;
       next.textContent = i === t.learn.length - 1 ? 'Jetzt üben! 🎮' : 'Weiter →';
@@ -271,7 +289,7 @@
       main.querySelectorAll('.chip').forEach((o) => { o.classList.toggle('on', o === ch); o.setAttribute('aria-pressed', o === ch); });
       S.play('select');
       FX.pop(ch);
-      toast(i <= 1 ? 'Super – dann zeig es im Quiz! 💪' : 'Gut, dass du ehrlich bist! Üben hilft. 🌱');
+      toast(isConfident(i) ? 'Super – dann zeig es im Quiz! 💪' : 'Gut, dass du ehrlich bist! Üben hilft. 🌱');
     }));
   }
 
@@ -287,7 +305,7 @@
       items.push({ topic: t, q });
     };
     if (mode === 'test') {
-      TOPICS.forEach((t) => R.shuffle(t.gens).concat(t.gens).slice(0, 2).forEach((g) => pushQ(t, g)));
+      TOPICS.filter((t) => !t.notInTest).forEach((t) => R.shuffle(t.gens).concat(t.gens).slice(0, SUBJ.test.perTopic).forEach((g) => pushQ(t, g)));
     } else {
       const t = TOPICS[topicId - 1];
       let gens = [];
@@ -300,7 +318,7 @@
   function startQuiz(mode, topicId) {
     quiz = { mode, topicId, items: buildItems(mode, topicId), idx: 0, points: 0, xp: 0, streak: 0, bestStreak: 0, results: [], chat: [] };
     const t = topicId ? TOPICS[topicId - 1] : null;
-    document.title = (t ? t.title : 'Großer Test') + ' – Üben – TermQuest';
+    document.title = (t ? t.title : SUBJ.test.title) + ' – Üben – ' + SUBJ.appName;
     renderQuestion();
   }
 
@@ -313,8 +331,9 @@
         const plain = (sel) => { const el = main.querySelector(sel); return el ? el.innerText.replace(/\s+/g, ' ').trim() : ''; };
         return {
           topicTitle: t.title,
-          question: [plain('.q-prompt'), plain('.q-visual')].filter(Boolean).join(' – ') +
-            (q.type === 'mc' ? ' Antwortmöglichkeiten: ' + q.options.map((o) => o.replace(/<[^>]+>/g, '')).join(' | ') : ''),
+          question: [plain('.q-prompt'), plain('.q-visual .big-math, .q-visual .word-form, .q-visual .scenario')].filter(Boolean).join(' – ') +
+            ((q.type === 'mc' || q.type === 'multi') ? ' Antwortmöglichkeiten: ' + q.options.map((o) => o.replace(/<[^>]+>/g, '')).join(' | ') : '') +
+            (q.type === 'order' ? ' Schritte (durcheinander): ' + q.items.join(' | ') : ''),
           answered: !!(quiz && quiz.answered),
           solution: solutionHtml(q).replace(/<[^>]+>/g, ''),
         };
@@ -367,6 +386,34 @@
       ans.innerHTML = `<div class="options ${q.optionStyle || ''}" data-silent>${q.options.map((o, i) =>
         `<button class="opt" data-i="${i}"><span class="opt-key">${'ABCD'[i]}</span><span class="opt-body">${o}</span></button>`).join('')}</div>`;
       ans.querySelectorAll('.opt').forEach((b) => b.addEventListener('click', () => answerMC(+b.dataset.i)));
+    } else if (q.type === 'hotspot') {
+      check.hidden = true;
+      ans.innerHTML = `<div class="hotspot" data-silent>${q.svg}</div><p class="hs-hint">👆 Tippe auf die richtige Stelle.</p>`;
+      ans.querySelector('.hotspot').addEventListener('click', (e) => {
+        const el = e.target.closest('[data-part]');
+        if (!el || qz.answered) return;
+        answerHotspot(el.dataset.part, el);
+      });
+    } else if (q.type === 'multi') {
+      ans.innerHTML = `<p class="hs-hint">Es können mehrere Antworten richtig sein.</p><div class="options multi ${q.optionStyle || ''}" data-silent>${q.options.map((o, i) =>
+        `<button class="opt" data-i="${i}" aria-pressed="false"><span class="opt-key">☐</span><span class="opt-body">${o}</span></button>`).join('')}</div>`;
+      ans.querySelectorAll('.opt').forEach((b) => b.addEventListener('click', () => {
+        if (qz.answered) return;
+        const on = b.getAttribute('aria-pressed') !== 'true';
+        b.setAttribute('aria-pressed', on);
+        b.classList.toggle('picked', on);
+        b.querySelector('.opt-key').textContent = on ? '☑' : '☐';
+        S.play(on ? 'select' : 'tap');
+        FX.pop(b);
+      }));
+      check.addEventListener('click', checkMulti);
+    } else if (q.type === 'order') {
+      qz.seq = [];
+      qz.pool = R.shuffle(q.items.map((_, i) => i));
+      ans.innerHTML = `<p class="hs-hint">Tippe die Schritte in der richtigen Reihenfolge an. Antippen in der Liste nimmt einen Schritt wieder heraus.</p>
+        <ol class="order-seq" data-silent></ol><div class="order-pool" data-silent></div>`;
+      drawOrder();
+      check.addEventListener('click', checkOrder);
     } else {
       const letters = q.type === 'term' ? Array.from(new Set(((q.expected || '') + (q.prefix || '')).match(/[a-z]/g) || [])).sort() : [];
       const keys = q.type === 'term'
@@ -440,7 +487,27 @@
       const sol = q.simplified ? M.simplify(q.expected) : M.pretty(q.expected);
       return `<span class="m">${q.prefix ? q.prefix + sol + (q.suffix || '') : sol}</span>`;
     }
+    if (q.type === 'hotspot') return `<b>${q.answerLabel}</b> (grün markiert)`;
+    if (q.type === 'multi') return q.correct.map((i) => q.options[i]).join(' · ');
+    if (q.type === 'order') return `<ol class="order-solution">${q.items.map((x) => `<li>${x}</li>`).join('')}</ol>`;
     return q.options[q.correct];
+  }
+
+  // Nach dem Auswerten: Eingaben sperren und die richtige Lösung sichtbar machen
+  function lockAndReveal(q) {
+    main.querySelectorAll('.q-answer button, .q-answer input').forEach((b) => { b.disabled = true; });
+    if (q.type === 'hotspot') {
+      main.querySelectorAll(`.hotspot [data-part="${q.answer}"]`).forEach((p) => p.classList.add('hs-reveal'));
+      main.querySelector('.hotspot').classList.add('locked');
+    }
+    if (q.type === 'multi') {
+      main.querySelectorAll('.options.multi .opt').forEach((b) => {
+        const i = +b.dataset.i, on = b.getAttribute('aria-pressed') === 'true', right = q.correct.includes(i);
+        b.classList.remove('picked'); // Auswahlfarbe weg, damit nur Richtig/Falsch-Farben zählen
+        if (right) b.classList.add(on ? 'correct' : 'missed');
+        else if (on) b.classList.add('wrong');
+      });
+    }
   }
 
   function answerMC(i) {
@@ -452,6 +519,61 @@
     btns[q.correct].classList.add('correct');
     if (i !== q.correct) { btns[i].classList.add('wrong'); FX.shake(btns[i]); }
     finish(i === q.correct, false, btns[i]);
+  }
+
+  // Gemeinsamer Ablauf: falsch beim ersten Versuch → zweite Chance, sonst auswerten
+  function judge(ok, el) {
+    const qz = quiz;
+    if (!ok && qz.attempts === 0) {
+      qz.attempts = 1;
+      FX.shake(main.querySelector('.q-card'));
+      S.play('wrong');
+      feedback('retry', `❌ <b>Noch nicht richtig.</b> Du hast noch einen Versuch!<br><small>${HINTS[qz.items[qz.idx].topic.id] || 'Schau dir die Aufgabe noch einmal genau an.'}</small>`);
+      return false;
+    }
+    finish(ok, false, el);
+    return true;
+  }
+
+  function answerHotspot(part, el) {
+    const q = quiz.items[quiz.idx].q;
+    const ok = part === q.answer;
+    const parts = main.querySelectorAll(`.hotspot [data-part="${part}"]`);
+    parts.forEach((p) => p.classList.add(ok ? 'hs-right' : 'hs-wrong'));
+    if (!ok) setTimeout(() => parts.forEach((p) => p.classList.remove('hs-wrong')), 900);
+    judge(ok, el);
+  }
+
+  function checkMulti() {
+    const q = quiz.items[quiz.idx].q;
+    const picked = [...main.querySelectorAll('.options.multi .opt')].filter((b) => b.getAttribute('aria-pressed') === 'true').map((b) => +b.dataset.i);
+    if (!picked.length) { S.play('almost'); feedback('info', '✏️ Wähle mindestens eine Antwort aus.'); return; }
+    const ok = picked.length === q.correct.length && q.correct.every((c) => picked.includes(c));
+    judge(ok, document.getElementById('q-check'));
+  }
+
+  function drawOrder() {
+    const qz = quiz, q = qz.items[qz.idx].q;
+    const seqEl = main.querySelector('.order-seq'), poolEl = main.querySelector('.order-pool');
+    seqEl.innerHTML = qz.seq.map((i) => `<li><button class="order-item in" data-i="${i}">${q.items[i]}</button></li>`).join('') ||
+      '<li class="order-empty">Hier landet deine Reihenfolge …</li>';
+    poolEl.innerHTML = qz.pool.filter((i) => !qz.seq.includes(i)).map((i) => `<button class="order-item" data-i="${i}">${q.items[i]}</button>`).join('');
+    main.querySelectorAll('.order-item').forEach((b) => b.addEventListener('click', () => {
+      if (qz.answered) return;
+      const i = +b.dataset.i;
+      if (b.classList.contains('in')) qz.seq = qz.seq.filter((x) => x !== i); else qz.seq.push(i);
+      S.play(b.classList.contains('in') ? 'swoosh' : 'select');
+      drawOrder();
+      FX.pop(seqEl);
+    }));
+  }
+
+  function checkOrder() {
+    const qz = quiz, q = qz.items[qz.idx].q;
+    if (qz.seq.length < q.items.length) { S.play('almost'); feedback('info', `✏️ Bringe erst alle ${q.items.length} Schritte in eine Reihenfolge.`); return; }
+    const ok = qz.seq.every((v, k) => v === k);
+    main.querySelectorAll('.order-seq li').forEach((li, k) => li.classList.toggle('wrong-pos', qz.seq[k] !== k));
+    judge(ok, document.getElementById('q-check'));
   }
 
   function checkInput() {
@@ -487,14 +609,7 @@
       }
       ok = r.status === 'ok';
     }
-    if (!ok && qz.attempts === 0) {
-      qz.attempts = 1;
-      FX.shake(main.querySelector('.q-card'));
-      S.play('wrong');
-      feedback('retry', `❌ <b>Noch nicht richtig.</b> Du hast noch einen Versuch!<br><small>${HINTS[qz.items[qz.idx].topic.id] || 'Schau dir die Aufgabe noch einmal genau an.'}</small>`);
-      input.select();
-      return;
-    }
+    if (!ok && qz.attempts === 0) { judge(false); input.select(); return; }
     input.disabled = true;
     main.querySelectorAll('.key').forEach((k) => { k.disabled = true; });
     finish(ok, false, document.getElementById('q-check'));
@@ -509,6 +624,7 @@
     qz.results[qz.idx] = pts;
     const card = main.querySelector('.q-card');
     const streakEl = main.querySelector('.streak');
+    lockAndReveal(q);
     if (ok) {
       const xp = pts === 1 ? 10 : 5;
       qz.xp += xp;
@@ -594,13 +710,15 @@
       const per = {};
       qz.items.forEach((it, i) => { per[it.topic.id] = (per[it.topic.id] || 0) + (qz.results[i] || 0); });
       testTable = `<table class="nice-table result-table"><tr><th>Thema</th><th>Punkte</th><th>Empfehlung</th></tr>
-        ${TOPICS.map((t) => {
+        ${TOPICS.filter((t) => !t.notInTest).map((t) => {
           const p = per[t.id] || 0;
           const self = store.self[t.id];
-          let rec = p >= 2 ? '✅ Sitzt!' : p >= 1 ? '🙂 Fast sicher' : '🏋️ Nochmal üben';
-          if (p < 1.5 && (self === 0 || self === 1)) rec += '<br><small>Du hast dich hier sicher eingeschätzt – schau nochmal rein!</small>';
-          if (p >= 2 && (self === 2 || self === 3)) rec += '<br><small>Besser als gedacht! Pass deine Einschätzung an? 😉</small>';
-          return `<tr><td><a href="#/t/${t.id}">${t.emoji} ${t.title}</a></td><td>${M.fmtNum(p)} / 2</td><td>${rec}</td></tr>`;
+          let rec;
+          const per2 = SUBJ.test.perTopic;
+          rec = p >= per2 ? '✅ Sitzt!' : p >= per2 / 2 ? '🙂 Fast sicher' : '🏋️ Nochmal üben';
+          if (p < per2 * 0.75 && self != null && isConfident(self)) rec += '<br><small>Du hast dich hier sicher eingeschätzt – schau nochmal rein!</small>';
+          if (p >= per2 && self != null && !isConfident(self)) rec += '<br><small>Besser als gedacht! Pass deine Einschätzung an? 😉</small>';
+          return `<tr><td><a href="#/t/${t.id}">${t.emoji} ${t.title}</a></td><td>${M.fmtNum(p)} / ${per2}</td><td>${rec}</td></tr>`;
         }).join('')}</table>`;
     }
 
@@ -651,7 +769,7 @@
 
   // ---------- Avatar-Shop ----------
   function renderShop() {
-    document.title = 'Avatar-Shop – TermQuest';
+    document.title = 'Avatar-Shop – ' + SUBJ.appName;
     const av = store.avatar;
     let slot = 'shirt';
     let preview = null; // Artikel, der gerade anprobiert wird
@@ -784,7 +902,7 @@
   });
 
   // Für automatische Tests: aktuelle Frage auslesen
-  window.TermQuest = { currentQuestion: () => (quiz ? quiz.items[quiz.idx].q : null) };
+  window.TermQuest = window.LearnApp = { currentQuestion: () => (quiz ? quiz.items[quiz.idx].q : null) };
 
   // ---------- Start ----------
   updateHeader();
