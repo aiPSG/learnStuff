@@ -26,7 +26,7 @@ window.Subject = {
   },
   extraHome: [{ href: '#/p/glossar', label: '📖 Glossar' }],
   pages: { glossar: window.BioTopics.glossaryPage },
-  otherApps: [{ href: '../', label: '🧮 Mathe: TermQuest – Terme' }],
+  otherApps: [{ href: '../', label: '🧮 Mathe: TermQuest – Terme' }, { href: '../deutsch/', label: '✍️ Deutsch: ArguQuest' }],
   tutor: {
     faq: window.BioTopics.FAQ,
     tagline: 'Dein KI-Bio-Tutor – gibt Tipps, aber verrät keine Lösungen, solange du die Aufgabe bearbeitest.',

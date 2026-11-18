@@ -178,6 +178,10 @@ So antwortest du:
    * Baut das Chat-Fenster in container ein.
    * opts: { topic, history (Array, wird weiterverwendet), getContext(), hint, sound, fx }
    */
+  let activeSend = null;
+  /** Schickt einen Text in den gerade sichtbaren Chat (z. B. „Feedback zu meiner These“). */
+  function askInChat(text) { if (activeSend && available()) activeSend(text); }
+
   function mount(container, opts) {
     const S = root.Sound, FX = root.FX;
     const faq = SUBJECT.faq[opts.topic.id] || [];
@@ -214,6 +218,7 @@ So antwortest du:
     // Bisherigen Verlauf (aus früheren Fragen dieses Quiz) anzeigen
     history.forEach((m) => bubble(m.role === 'user' ? 'me' : 'bot', fmt(m.content)));
 
+    activeSend = (t) => { send(t); container.querySelector('.tutor').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
     async function send(text) {
       if (busy) return;
       if (!available()) return;
@@ -274,5 +279,5 @@ So antwortest du:
     });
   }
 
-  root.Tutor = { mount, configure, available, mode, getKey, setKey, FAQ, systemPrompt };
+  root.Tutor = { mount, configure, askInChat, available, mode, getKey, setKey, FAQ, systemPrompt };
 })(window);

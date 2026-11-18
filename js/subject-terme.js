@@ -24,6 +24,6 @@ window.Subject = {
     9: 'Tipp: Jeder mit jedem – und am Ende gleichartige Terme zusammenfassen.',
     10: 'Tipp: Fläche = Länge · Breite. Zusammengesetzte Seiten gehören in Klammern.',
   },
-  otherApps: [{ href: 'bio/', label: '🔬 Biologie: ZellQuest – Zellen & Mikroskop' }],
+  otherApps: [{ href: 'bio/', label: '🔬 Biologie: ZellQuest – Zellen & Mikroskop' }, { href: 'deutsch/', label: '✍️ Deutsch: ArguQuest – Thesen & Zitate' }],
   // Tutor nutzt seine eingebauten Mathe-Vorgaben (js/tutor.js)
 };

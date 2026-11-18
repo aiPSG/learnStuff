@@ -75,16 +75,6 @@ body.bio .logo b { color: #059669; }
 .glossary-list dd { margin: 2px 0 0; }
 .glossary-list small { display: block; color: var(--ink-soft); }
 
-/* Glossar-Seite */
-.gloss-tools { display: flex; gap: 8px; margin: 12px 0; }
-.gloss-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-.gloss-card { position: relative; min-height: 120px; border: 0; border-radius: 18px; padding: 14px; cursor: pointer; background: #fff; box-shadow: var(--shadow); border-bottom: 5px solid #10b981; font: inherit; text-align: center; perspective: 600px; transition: transform .35s; }
-.gloss-card .front { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; display: grid; place-items: center; min-height: 90px; }
-.gloss-card .back { display: none; font-size: .95rem; text-align: left; }
-.gloss-card.flipped { background: #ecfdf5; animation: flipIn .4s; }
-.gloss-card.flipped .front { display: none; }
-.gloss-card.flipped .back { display: block; }
-
 @media (max-width: 640px) {
   .label text { font-size: 17px; }
   .options.tf { grid-template-columns: 1fr 1fr; }

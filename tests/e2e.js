@@ -38,8 +38,9 @@ const ROUNDS = +(process.argv[4] || 2);
   async function clickPart(page, part) {
     const pt = await page.evaluate((part) => {
       const groups = [...document.querySelectorAll(`.hotspot [data-part="${part}"]`)];
+      if (groups[0]) groups[0].scrollIntoView({ block: 'center' }); // wie ein Kind: erst hinscrollen
       // Zuerst die Mitte jeder sichtbaren Form probieren (so tippt ein Kind), dann ein Raster
-      for (const el of groups.flatMap((gr) => [...gr.querySelectorAll('circle, ellipse, rect, path')])) {
+      for (const el of groups.flatMap((gr) => [gr, ...gr.querySelectorAll('circle, ellipse, rect, path, span')])) {
         const r = el.getBoundingClientRect();
         const x = r.left + r.width / 2, y = r.top + r.height / 2;
         const hit = document.elementFromPoint(x, y);
@@ -89,6 +90,12 @@ const ROUNDS = +(process.argv[4] || 2);
       for (const i of (pick.length ? pick : [0])) await page.click(`.options.multi .opt[data-i="${i}"]`);
       await page.click('#q-check');
       if (!correct) await page.click('#q-check');
+    } else if (q.type === 'write') {
+      await page.fill('#q-write', 'Das ist meine eigene Antwort mit genug Wörtern, damit sie zählt und geprüft werden kann, auch bei längeren Aufgaben zum Schreiben hier. These, Argument, Beleg und eine Schlussfolgerung gehören in einen guten Absatz, deshalb schreibe ich hier noch etwas mehr dazu.');
+      await page.click('#q-check');
+      await page.waitForSelector('.selfcheck .rate');
+      await page.click('.selfcheck .crit >> nth=0');
+      await page.click(`.selfcheck .rate[data-r="${correct ? 1 : 0}"]`);
     } else if (q.type === 'order') {
       const seq = [...Array(q.n).keys()];
       if (!correct) seq.reverse();
@@ -157,7 +164,9 @@ const ROUNDS = +(process.argv[4] || 2);
     await page.click('a[href="#/p/glossar"]');
     await page.waitForSelector('.gloss-card');
     const before = await page.locator('.gloss-card').count();
-    await page.fill('#gloss-q', 'kern');
+    // Suchbegriff aus dem ersten Eintrag nehmen, damit der Test für jedes Fach passt
+    const term = (await page.textContent('.gloss-card .front')).trim().slice(0, 5);
+    await page.fill('#gloss-q', term);
     const after = await page.locator('.gloss-card').count();
     ok(before > 20 && after > 0 && after < before, `Glossar-Suche: ${before} → ${after}`);
     await page.click('.gloss-card >> nth=0');

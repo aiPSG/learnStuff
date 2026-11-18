@@ -407,6 +407,18 @@
         FX.pop(b);
       }));
       check.addEventListener('click', checkMulti);
+    } else if (q.type === 'write') {
+      ans.innerHTML = `<textarea id="q-write" class="q-write" rows="4" placeholder="${q.placeholder || 'Schreibe hier deine Antwort …'}" aria-label="Deine Antwort"></textarea>
+        <div class="write-meta"><span class="wc">0 Wörter</span><span>✍️ Selbstkontrolle: Danach vergleichst du mit Kriterien und Musterlösungen.</span></div>
+        <div class="selfcheck" hidden></div>`;
+      check.textContent = 'Fertig ✔';
+      const ta = document.getElementById('q-write');
+      ta.addEventListener('input', () => {
+        const n = (ta.value.trim().match(/\S+/g) || []).length;
+        ans.querySelector('.wc').textContent = n + (n === 1 ? ' Wort' : ' Wörter');
+        S.play('key');
+      });
+      check.addEventListener('click', showSelfCheck);
     } else if (q.type === 'order') {
       qz.seq = [];
       qz.pool = R.shuffle(q.items.map((_, i) => i));
@@ -489,13 +501,14 @@
     }
     if (q.type === 'hotspot') return `<b>${q.answerLabel}</b> (grün markiert)`;
     if (q.type === 'multi') return q.correct.map((i) => q.options[i]).join(' · ');
+    if (q.type === 'write') return `<ul class="order-solution">${q.models.map((x) => `<li>${x}</li>`).join('')}</ul>`;
     if (q.type === 'order') return `<ol class="order-solution">${q.items.map((x) => `<li>${x}</li>`).join('')}</ol>`;
     return q.options[q.correct];
   }
 
   // Nach dem Auswerten: Eingaben sperren und die richtige Lösung sichtbar machen
   function lockAndReveal(q) {
-    main.querySelectorAll('.q-answer button, .q-answer input').forEach((b) => { b.disabled = true; });
+    main.querySelectorAll('.q-answer button, .q-answer input, .q-answer textarea').forEach((b) => { b.disabled = true; });
     if (q.type === 'hotspot') {
       main.querySelectorAll(`.hotspot [data-part="${q.answer}"]`).forEach((p) => p.classList.add('hs-reveal'));
       main.querySelector('.hotspot').classList.add('locked');
@@ -550,6 +563,45 @@
     if (!picked.length) { S.play('almost'); feedback('info', '✏️ Wähle mindestens eine Antwort aus.'); return; }
     const ok = picked.length === q.correct.length && q.correct.every((c) => picked.includes(c));
     judge(ok, document.getElementById('q-check'));
+  }
+
+  // Schreibaufgabe: nach dem Schreiben mit Kriterien und Musterlösungen selbst vergleichen
+  function showSelfCheck() {
+    const qz = quiz, q = qz.items[qz.idx].q;
+    const ta = document.getElementById('q-write');
+    const text = ta.value.trim();
+    if ((text.match(/\S+/g) || []).length < (q.minWords || 4)) {
+      FX.shake(ta); S.play('almost');
+      feedback('info', `✏️ Schreib bitte mindestens ${q.minWords || 4} Wörter.`);
+      return;
+    }
+    ta.readOnly = true;
+    document.getElementById('q-check').hidden = true;
+    const box = main.querySelector('.selfcheck');
+    box.hidden = false;
+    box.innerHTML = `<h3>🔎 Prüfe deine Antwort selbst</h3>
+      <ul class="criteria" data-silent>${q.criteria.map((c) => `<li><button class="crit" aria-pressed="false"><span>☐</span> ${c}</button></li>`).join('')}</ul>
+      <div class="models"><b>So könnte eine gute Lösung aussehen:</b><ul>${q.models.map((m) => `<li>${m}</li>`).join('')}</ul></div>
+      ${TU.available() ? '<button class="btn small ghost" id="ask-claude" data-silent>🤖 Claude um Feedback bitten</button>' : ''}
+      <p class="rate-q">Wie gut erfüllt deine Antwort die Kriterien?</p>
+      <div class="rate-row" data-silent><button class="btn small rate" data-r="1">✅ Alles erfüllt</button><button class="btn small rate ghost" data-r="0.5">🙂 Teilweise</button><button class="btn small rate ghost" data-r="0">❌ Noch nicht</button></div>`;
+    FX.pop(box); S.play('swoosh');
+    box.querySelectorAll('.crit').forEach((b) => b.addEventListener('click', () => {
+      const on = b.getAttribute('aria-pressed') !== 'true';
+      b.setAttribute('aria-pressed', on); b.classList.toggle('on', on);
+      b.querySelector('span').textContent = on ? '☑' : '☐';
+      S.play(on ? 'select' : 'tap'); FX.pop(b);
+    }));
+    const ask = document.getElementById('ask-claude');
+    if (ask) ask.addEventListener('click', () => {
+      TU.askInChat(`Bitte gib mir kurzes Feedback zu meiner Antwort. Aufgabe: ${main.querySelector('.q-prompt').innerText} – Meine Antwort: ${text}`);
+      ask.disabled = true;
+    });
+    box.querySelectorAll('.rate').forEach((b) => b.addEventListener('click', () => {
+      const r = +b.dataset.r;
+      finish(r > 0, false, b, r);
+    }));
+    box.scrollIntoView({ behavior: FX.reduced ? 'auto' : 'smooth', block: 'nearest' });
   }
 
   function drawOrder() {
@@ -615,11 +667,11 @@
     finish(ok, false, document.getElementById('q-check'));
   }
 
-  function finish(ok, skipped, el) {
+  function finish(ok, skipped, el, ptsOverride) {
     const qz = quiz;
     const q = qz.items[qz.idx].q;
     qz.answered = true;
-    const pts = ok ? (qz.attempts === 0 ? 1 : 0.5) : 0;
+    const pts = ptsOverride != null ? ptsOverride : ok ? (qz.attempts === 0 ? 1 : 0.5) : 0;
     qz.points += pts;
     qz.results[qz.idx] = pts;
     const card = main.querySelector('.q-card');
@@ -637,7 +689,8 @@
       if ([3, 5, 8, 10, 15, 20].includes(qz.streak)) {
         setTimeout(() => { S.play('streak'); FX.floatText(streakEl, `🔥 ${qz.streak}er-Serie!`, 'streak'); }, 350);
       }
-      feedback('good', `<b>${R.pick(PRAISE)}</b>${pts < 1 ? ' <small>(im zweiten Versuch)</small>' : ''}<div class="explain">${q.explain || ''}</div>`);
+      const note = q.type === 'write' ? (pts < 1 ? ' <small>(teilweise – schau dir die Musterlösung noch einmal an)</small>' : ' <small>(Selbstkontrolle)</small>') : pts < 1 ? ' <small>(im zweiten Versuch)</small>' : '';
+      feedback('good', `<b>${q.type === 'write' && pts < 1 ? 'Guter Anfang! 🌱' : R.pick(PRAISE)}</b>${note}<div class="explain">${q.explain || ''}</div>`);
     } else {
       qz.streak = 0;
       if (!skipped) { S.play('wrong'); FX.shake(card); } else { S.play('swoosh'); }
@@ -646,7 +699,7 @@
       const inp = document.getElementById('q-input');
       if (inp) inp.disabled = true;
       main.querySelectorAll('.key').forEach((k) => { k.disabled = true; });
-      feedback('bad', `<b>${skipped ? 'Kein Problem – so geht es:' : 'Leider falsch.'}</b> Richtig ist: ${solutionHtml(q)}<div class="explain">${q.explain || ''}</div>`);
+      feedback('bad', `<b>${skipped ? 'Kein Problem – so geht es:' : q.type === 'write' ? 'Ehrlich eingeschätzt – übe weiter!' : 'Leider falsch.'}</b> ${q.type === 'write' ? 'Beispiele' : 'Richtig ist'}: ${solutionHtml(q)}<div class="explain">${q.explain || ''}</div>`);
     }
     streakEl.textContent = '🔥 ' + qz.streak;
     streakEl.classList.toggle('hot', qz.streak >= 2);

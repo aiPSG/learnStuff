@@ -1,0 +1,32 @@
+/* ArguQuest – Ergänzungen zum gemeinsamen Stil */
+body.deutsch { background: linear-gradient(160deg, #fff1f2 0%, #fffbeb 50%, #eff6ff 100%) fixed; --accent: #e11d48; }
+body.deutsch .logo b { color: #e11d48; }
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.info-box { background: #f0fdf4; border-radius: 16px; padding: 12px 14px; }
+.info-box.bad { background: #fff1f2; }
+.info-box b { font-family: var(--font-head); font-size: 1.15rem; }
+.info-box p { margin: 4px 0; color: var(--ink-soft); }
+.info-box ul { margin: 6px 0; padding-left: 1.2em; }
+.explore-info { margin-top: 10px; background: #fffbeb; border-radius: 14px; padding: 10px 14px; min-height: 3em; text-align: left; }
+.explore-info small { display: block; color: var(--ink-soft); margin-top: 4px; }
+.sorter .row-btns, .baukasten .row-btns, .werkstatt .row-btns { margin: 10px 0; }
+.gap { display: inline-block; min-width: 4em; border-bottom: 3px solid var(--c); color: var(--c); text-align: center; }
+/* Bausteine These – Argument – Beleg */
+.arg-blocks { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-bottom: 10px; }
+.arg-blocks .blk { display: flex; flex-direction: column; gap: 2px; }
+.blk { border-radius: 14px; padding: 10px 12px; border-left: 6px solid; text-align: left; }
+.blk b { font-family: var(--font-head); font-size: 1.1rem; }
+.blk span, .blk small { color: var(--ink-soft); font-size: .85rem; font-weight: 700; display: block; }
+.blk.these { background: #fff1f2; border-color: #e11d48; }
+.blk.arg { background: #eff6ff; border-color: #2563eb; }
+.blk.beleg { background: #f0fdf4; border-color: #16a34a; }
+.arg-chain { display: grid; gap: 8px; margin: 10px 0; }
+.arg-chain .blk { animation: slideL .35s both; }
+.arg-chain .blk:nth-child(2) { animation-delay: .08s; } .arg-chain .blk:nth-child(3) { animation-delay: .16s; }
+.arg-chain .blk:nth-child(4) { animation-delay: .24s; } .arg-chain .blk:nth-child(5) { animation-delay: .32s; } .arg-chain .blk:nth-child(6) { animation-delay: .4s; }
+/* Zitier-Werkstatt */
+.lined .ln.hl-line { background: #fef3c7; border-radius: 6px; }
+.cite-build { font-size: 1.15rem; font-weight: 800; }
+.cb.q { color: #e11d48; font-size: 1.3em; }
+.cb.z { color: #2563eb; }
+.cb.w { background: #f0fdf4; border-radius: 6px; padding: 0 4px; }

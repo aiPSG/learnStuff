@@ -469,27 +469,10 @@
   function glossaryEntries() {
     return Object.keys(P).map((k) => [P[k].name, sentence(k, P)])
       .concat(Object.keys(MP).map((k) => [MP[k].name + ' (Mikroskop)', sentence(k, MP)]))
-      .concat(EXTRA_TERMS)
-      .sort((a, b) => a[0].localeCompare(b[0], 'de'));
+      .concat(EXTRA_TERMS);
   }
   function glossaryPage(main) {
-    const all = glossaryEntries();
-    main.innerHTML = `<a href="#/" class="back">← Übersicht</a><h1 class="shop-title">📖 Glossar</h1>
-      <p>Alle Fachbegriffe zum Thema Zellen. Tippe eine Karte an, um sie umzudrehen – so kannst du dich selbst abfragen!</p>
-      <div class="gloss-tools" data-silent><input id="gloss-q" class="chat-input" type="search" placeholder="Begriff suchen …" aria-label="Begriff suchen">
-        <button class="btn small ghost" id="gloss-flip">🔄 Alle umdrehen</button></div>
-      <div class="gloss-grid"></div>`;
-    const grid = main.querySelector('.gloss-grid');
-    let flipAll = false;
-    const draw = () => {
-      const q = main.querySelector('#gloss-q').value.trim().toLowerCase();
-      grid.innerHTML = all.filter(([t, d]) => !q || t.toLowerCase().includes(q) || d.toLowerCase().includes(q))
-        .map(([t, d]) => `<button class="gloss-card${flipAll ? ' flipped' : ''}" data-silent><span class="front">${esc(t)}</span><span class="back">${d}</span></button>`).join('') || '<p>Nichts gefunden.</p>';
-      grid.querySelectorAll('.gloss-card').forEach((c) => c.addEventListener('click', () => { c.classList.toggle('flipped'); S().play('swoosh'); }));
-    };
-    main.querySelector('#gloss-q').addEventListener('input', draw);
-    main.querySelector('#gloss-flip').addEventListener('click', () => { flipAll = !flipAll; draw(); S().play('select'); });
-    draw();
+    root.Glossary.page(main, glossaryEntries(), 'Alle Fachbegriffe zum Thema Zellen.');
   }
 
   // ---------- Fragen-Knöpfe für den Tutor ----------

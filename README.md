@@ -1,11 +1,12 @@
 # learnStuff – Lern-Apps 🧮🔬
 
-Zwei Lern-Apps mit gemeinsamer Technik, gemeinsamen Credits und einem gemeinsamen Avatar:
+Drei Lern-Apps mit gemeinsamer Technik, gemeinsamen Credits und einem gemeinsamen Avatar:
 
 | App | Fach | Adresse |
 |---|---|---|
 | **TermQuest** 🧮 | Mathe: Selbstdiagnosebogen „Terme II“ | `/` |
 | **ZellQuest** 🔬 | Bio 8: Checkliste Klassenarbeit „Zellen“ | `/bio/` |
+| **ArguQuest** ✍️ | Deutsch: Thesen, Argumente, Zitiertechnik | `/deutsch/` |
 
 # TermQuest 🧮 – Terme II
 
@@ -87,7 +88,32 @@ mit Karteikarten (die Checkliste empfiehlt, eines anzulegen).
 Die Inhalte entsprechen dem üblichen Stoff der 7./8. Klasse. **Mit Heft, Buch und den Its-learning-Materialien
 abgleichen** – die App kennt diese Unterlagen nicht.
 
-## Aufbau (beide Apps)
+# ArguQuest ✍️ – Thesen & Zitate
+
+Zur **Deutsch-Checkliste** aus dem Hausaufgabenheft (Deutscharbeit):
+Feststellung und These unterscheiden (Kennzeichen) · selbst Thesen formulieren · Thesen wider- und belegen ·
+Zitiertechnik beherrschen (Buch S. 287 – Seitenzahl bitte prüfen).
+
+Die vier Punkte sind auf acht Themen verteilt, damit jede Fähigkeit eigene Übungen bekommt:
+
+| # | Thema | Üben |
+|---|---|---|
+| 1 | Feststellung oder These? | Einordnen, Kennzeichen erkennen, These im Text antippen |
+| 2 | Thesen formulieren | gute These wählen, Fehler finden, **eigene Thesen schreiben** |
+| 3 | Argument & Beleg | Rolle erkennen, Beleg-Arten, Verknüpfungswörter, Reihenfolge |
+| 4 | Thesen belegen | Teile im Absatz antippen, Scheinargumente erkennen, **Argument schreiben** |
+| 5 | Thesen widerlegen | Gegenargumente, Widerlegungen wählen und **schreiben** |
+| 6 | Richtig zitieren | korrektes Zitat wählen, Zeile antippen, Fehler finden |
+| 7 | Zitate kürzen & einbauen | […], [Ergänzung], ‚Zitat im Zitat‘, vgl., Zitat einbauen |
+| 8 | Fit für die Deutscharbeit | Zitat als Beleg, ganze Argumentation, Mix aus allen Themen |
+
+Material: 12 Streitfragen mit je 3 Pro- und 3 Contra-Argumenten (jeweils mit Beleg und Widerlegung),
+36 Sätze zum Einordnen und zwei eigens geschriebene Texte mit Zeilennummern zum Zitieren.
+
+**Schreibaufgaben** (neuer Fragetyp `write`) werden nicht automatisch bewertet: Das Kind vergleicht
+selbst mit Kriterien und Musterlösungen (Selbstkontrolle) und kann – falls eingerichtet – Claude um Feedback bitten.
+
+## Aufbau (alle Apps)
 
 `js/app.js` ist die gemeinsame Lern-App (Navigation, Quiz mit allen Fragetypen, Shop, Chat).
 Was fachspezifisch ist, steht in einer Fach-Datei: `js/subject-terme.js` bzw. `bio/subject.js`.
@@ -102,7 +128,8 @@ js/subject-terme.js  Fach-Konfiguration TermQuest
 ```
 
 Fragetypen: Auswahl (`mc`), Zahl (`num`), Term (`term`), Diagramm antippen (`hotspot`),
-Mehrfachauswahl (`multi`), Reihenfolge (`order`).
+Mehrfachauswahl (`multi`), Reihenfolge (`order`), Schreibaufgabe mit Selbstkontrolle (`write`).
+Gemeinsam genutzt: `js/glossary.js` (Glossar-Seite für jedes Fach).
 
 ## Aufbau TermQuest
 
@@ -128,8 +155,10 @@ tests/           node tests/mathterm.test.js · node tests/generators.test.js
 node tests/mathterm.test.js     # Parser & Prüfung
 node tests/generators.test.js   # erzeugt 15.000+ Aufgaben und prüft, dass jede Musterlösung akzeptiert wird
 node tests/bio.test.js          # erzeugt 18.000+ Bio-Aufgaben und prüft sie
+node tests/deutsch.test.js      # prüft jede Zitat-Angabe gegen den Text und erzeugt 19.000+ Deutsch-Aufgaben
 # Browser-Test (beide Apps): Server starten, dann
 python3 -m http.server 8765 &
 NODE_PATH=$(npm root -g) node tests/e2e.js http://localhost:8765/
 NODE_PATH=$(npm root -g) node tests/e2e.js http://localhost:8765/bio/
+NODE_PATH=$(npm root -g) node tests/e2e.js http://localhost:8765/deutsch/
 ```

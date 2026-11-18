@@ -477,6 +477,44 @@ dialog#settings::backdrop { background: rgba(30, 27, 75, .45); }
 .order-solution { margin: 6px 0 0; padding-left: 1.3em; }
 .other-apps { text-align: center; margin-top: 26px; display: flex; gap: 8px; justify-content: center; align-items: center; flex-wrap: wrap; color: var(--ink-soft); font-weight: 700; }
 
+/* Glossar-Seite */
+.gloss-tools { display: flex; gap: 8px; margin: 12px 0; }
+.gloss-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.gloss-card { position: relative; min-height: 120px; border: 0; border-radius: 18px; padding: 14px; cursor: pointer; background: #fff; box-shadow: var(--shadow); border-bottom: 5px solid var(--accent, #10b981); font: inherit; text-align: center; perspective: 600px; transition: transform .35s; }
+.gloss-card .front { font-family: var(--font-head); font-size: 1.2rem; font-weight: 700; display: grid; place-items: center; min-height: 90px; }
+.gloss-card .back { display: none; font-size: .95rem; text-align: left; }
+.gloss-card.flipped { background: color-mix(in srgb, var(--accent, #10b981) 12%, #fff); animation: flipIn .4s; }
+.gloss-card.flipped .front { display: none; }
+.gloss-card.flipped .back { display: block; }
+
+/* Schreibaufgabe (Selbstkontrolle) */
+.q-write { width: 100%; font: 600 1.05rem var(--font-body); border: 3px solid var(--line); border-radius: 16px; padding: 12px 14px; resize: vertical; min-height: 110px; }
+.q-write:focus { outline: none; border-color: var(--c); }
+.write-meta { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; font-size: .85rem; color: var(--ink-soft); margin-top: 4px; }
+.selfcheck { margin-top: 14px; background: #f8fafc; border-radius: 16px; padding: 14px; }
+.selfcheck h3 { margin: 0 0 6px; font-size: 1.05rem; }
+.criteria { list-style: none; padding: 0; margin: 0 0 10px; display: grid; gap: 6px; }
+.crit { width: 100%; text-align: left; border: 2px solid var(--line); background: #fff; border-radius: 12px; padding: 7px 10px; font-weight: 700; cursor: pointer; }
+.crit.on { border-color: var(--good); background: var(--good-bg); }
+.models { background: #fff; border-left: 5px solid var(--c); border-radius: 12px; padding: 8px 12px; margin-bottom: 10px; }
+.models ul { margin: 6px 0 0; padding-left: 1.2em; }
+.rate-q { font-weight: 800; margin: 10px 0 6px; }
+.rate-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.rate-row .btn:not(.ghost) { background: var(--good); }
+
+/* Text antippen (Hotspot in Texten) */
+.text-hs { line-height: 1.9; font-size: 1.05rem; background: #fff; border-radius: 14px; padding: 12px 14px; text-align: left; }
+.text-hs [data-part] { border-radius: 6px; padding: 1px 2px; transition: background .15s; }
+.hotspot .text-hs [data-part]:hover { background: #fef3c7; filter: none; }
+.text-hs [data-part].hs-right, .text-hs [data-part].hs-reveal { background: var(--good-bg); box-shadow: 0 0 0 2px #22c55e; filter: none; }
+.text-hs [data-part].hs-wrong { background: var(--bad-bg); box-shadow: 0 0 0 2px #ef4444; filter: none; }
+.lined { font-size: .95rem; line-height: 1.55; overflow-x: auto; max-width: 100%; }
+.lined .ln > span:last-child { white-space: nowrap; } /* Zeilen dürfen nie umbrechen – sonst stimmen die Zeilennummern nicht */
+.hotspot:has(.lined) { max-width: 100%; }
+.lined .ln { display: flex; gap: 10px; padding: 1px 4px; }
+.lined .no { flex: none; width: 1.6em; text-align: right; color: var(--ink-soft); font-variant-numeric: tabular-nums; font-size: .85rem; padding-top: 2px; }
+.lined-title { font-weight: 800; margin-bottom: 4px; }
+
 /* Handy */
 @media (max-width: 640px) {
   body { font-size: 16px; }
